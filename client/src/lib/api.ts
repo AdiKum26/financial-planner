@@ -5,8 +5,10 @@ type ApiErrorBody = {
   error?: string;
 };
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 export async function fetchPortfolio(formData: FormData): Promise<PortfolioData> {
-  const response = await fetch('/api/portfolio', {
+  const response = await fetch(`${API_BASE_URL}/api/portfolio`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData),

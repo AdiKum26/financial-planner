@@ -90,6 +90,31 @@ Returns a JSON portfolio with `summary` and `holdings`, shaped by the prompt in 
 - The browser never receives or stores the OpenAI key.
 - `.env`, `node_modules`, and build outputs are ignored by git.
 
+## Deployment
+
+This repository is configured for a split deployment:
+
+- Backend API: Render Web Service, configured by `render.yaml`.
+- Frontend: GitHub Pages, configured by `.github/workflows/deploy-frontend.yml`.
+
+Render needs these environment variables:
+
+```bash
+NODE_ENV=production
+OPENAI_API_KEY=sk-...
+CLIENT_ORIGIN=https://YOUR_GITHUB_USERNAME.github.io
+```
+
+If you deploy GitHub Pages to a custom domain, set `CLIENT_ORIGIN` to that domain instead.
+
+GitHub Actions needs this repository variable:
+
+```bash
+VITE_API_BASE_URL=https://YOUR_RENDER_SERVICE.onrender.com
+```
+
+The frontend workflow automatically sets the Vite base path to `/${REPOSITORY_NAME}/`, which is the right default for project Pages URLs like `https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY_NAME/`.
+
 ## Verification
 
 The current app has been verified with:

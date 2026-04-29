@@ -8,10 +8,7 @@ import { callOpenAI, OpenAIError } from './openai';
 const app = express();
 
 app.use(express.json({ limit: '64kb' }));
-
-if (!env.isProduction) {
-  app.use(cors({ origin: 'http://localhost:5173' }));
-}
+app.use(cors({ origin: env.clientOrigins }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
