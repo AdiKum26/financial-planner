@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: financial-planner-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build -w server
+    startCommand: npm run start -w server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CLIENT_ORIGIN
+        value: https://YOUR_GITHUB_USERNAME.github.io

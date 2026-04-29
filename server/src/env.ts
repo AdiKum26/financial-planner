@@ -18,9 +18,14 @@ if (!apiKey.startsWith('sk-')) {
 }
 
 const port = Number(process.env.PORT || process.env.Port || process.env.port) || 3001;
+const clientOrigins = (process.env.CLIENT_ORIGIN || process.env.CLIENT_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 export const env = {
   openaiApiKey: apiKey,
   port,
+  clientOrigins,
   isProduction: process.env.NODE_ENV === 'production',
 };
