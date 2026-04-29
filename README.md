@@ -25,8 +25,7 @@ Core user flow:
 
 - **Secure AI integration:** OpenAI credentials stay server-side and are never exposed to the browser.
 - **Typed full-stack contract:** Request and response shapes are modeled in TypeScript across the client and server.
-- **Production deployment:** Render-ready backend/full-stack deployment via `render.yaml`.
-- **GitHub Pages option:** Static frontend deployment workflow included for split hosting.
+- **Production deployment:** Render-ready full-stack deployment via `render.yaml`.
 - **High-fidelity financial UI:** Dark institutional visual system with custom SVG charts, fund cards, loading states, and responsive layouts.
 - **Portfolio analytics:** Allocation donut chart, diversification gauge, risk breakdown, geographic exposure bars, and compounded projection estimates.
 - **Robust request validation:** Server validates payloads before calling OpenAI.
@@ -41,7 +40,7 @@ Core user flow:
 | Backend | Node.js, Express, TypeScript |
 | AI | OpenAI Chat Completions API with JSON response mode |
 | Tooling | npm workspaces, TypeScript project builds |
-| Deployment | Render, GitHub Actions, optional GitHub Pages |
+| Deployment | Render |
 
 ## Architecture
 
@@ -86,8 +85,6 @@ summary cards, charts, projections, fund cards
 │   │   ├── openai.ts         # OpenAI API integration
 │   │   └── prompt.ts         # Portfolio prompt contract
 │   └── package.json
-├── .github/workflows/
-│   └── deploy-frontend.yml   # Optional GitHub Pages deployment
 ├── render.yaml               # Render deployment blueprint
 ├── package.json              # Workspace scripts
 └── README.md
@@ -238,7 +235,7 @@ The exact response schema is enforced by the prompt contract in `server/src/prom
 
 ### Render Full-Stack Deployment
 
-This is the simplest deployment path and powers the current live demo.
+Render powers the current live demo and serves both the compiled React frontend and the Express API from one origin.
 
 `render.yaml` configures:
 
@@ -256,28 +253,6 @@ CLIENT_ORIGIN=https://financial-planner-sd6r.onrender.com
 ```
 
 Render will build both workspaces, start the Express server, and serve the compiled frontend.
-
-### Optional Split Deployment: GitHub Pages + Render API
-
-This repo also includes `.github/workflows/deploy-frontend.yml` for a static GitHub Pages frontend.
-
-For split deployment:
-
-1. Deploy the backend on Render.
-2. Set GitHub repository variable:
-
-```bash
-VITE_API_BASE_URL=https://YOUR_RENDER_SERVICE.onrender.com
-```
-
-3. In GitHub Pages settings, set the source to GitHub Actions.
-4. Set Render `CLIENT_ORIGIN` to:
-
-```bash
-https://YOUR_GITHUB_USERNAME.github.io
-```
-
-The workflow automatically sets Vite's base path to `/${REPOSITORY_NAME}/`, which matches GitHub project Pages URLs.
 
 ## Verification
 
