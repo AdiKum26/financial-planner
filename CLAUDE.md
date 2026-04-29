@@ -1,58 +1,58 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for AI coding agents working in this repository.
 
-## Repository purpose
+## Repository Purpose
 
-This is a **design-handoff package**, not a production application. The files here are a high-fidelity HTML/JSX prototype of a three-screen financial planner UI (Form → Loading → Results). Per `README.md`: the intended workflow is to **recreate these designs in a target codebase** (e.g. an existing React/Next.js app) using that codebase's own framework, components, and patterns — not to extend the prototype itself.
+This is now a production-oriented React + Vite + TypeScript app with an Express backend. It was migrated from a static design-handoff prototype, and the old prototype files have been removed.
 
-If asked to "build the app" without a target codebase being specified, default to **React + TypeScript + Tailwind CSS** as recommended in the README, and confirm with the user before scaffolding.
+The application flow is:
 
-## How the prototype runs
+1. The React client collects investment preferences.
+2. The client posts those preferences to `/api/portfolio`.
+3. The Express server validates the request, builds the financial-planner prompt, calls OpenAI with the server-side API key, and returns JSON.
+4. The client renders loading, results, and error states.
 
-There is no build system, no `package.json`, no tests, and no lint config. The prototype is a single static HTML file that loads React 18 + Babel-standalone from a CDN and compiles JSX in the browser:
+## Structure
 
-- Entry point: `Financial Planner.html`
-- Components are loaded as `<script type="text/babel" src="planner/*.jsx">` from inside the HTML
-- `planner/constants.js` is plain JS and is loaded *first* — it defines globals (`C`, `FONT`, `SLICE_COLORS`, `GEO_COLORS`, `REGIONS`, `HOME_COUNTRIES`, `DURATIONS`, `buildPrompt`) that every JSX file relies on. Component files reference these as globals; there are no `import`/`export` statements anywhere.
-- To preview locally, serve the directory over HTTP (e.g. `python3 -m http.server`) and open `Financial Planner.html` — opening via `file://` will fail because of the cross-file script loads.
+- `client/` - Vite React app, TypeScript, Tailwind config, UI components.
+- `client/src/lib/constants.ts` - design tokens and static option data.
+- `client/src/lib/api.ts` - frontend API client and response normalization.
+- `client/src/types.ts` - shared client-side portfolio and form types.
+- `client/src/components/` - form, loading, result, and SVG chart components.
+- `server/` - Express API server.
+- `server/src/env.ts` - `.env` loading and config validation.
+- `server/src/prompt.ts` - OpenAI prompt and server-side request type.
+- `server/src/openai.ts` - OpenAI chat-completions call.
+- `server/src/index.ts` - routes, validation, static production serving.
 
-## Architecture (prototype)
+## Environment
 
-State lives in the `App` component inside `Financial Planner.html` and is driven by a single `screen` enum (`'form' | 'loading' | 'results' | 'error'`). The screen components are pure presentational:
+Secrets belong only in the root `.env` file:
 
-- `FormScreen.jsx` — collects `formData` and calls `onSubmit`
-- `LoadingScreen.jsx` — shown while the OpenAI request is in flight
-- `ResultsScreen.jsx` — renders `portfolioData`; contains the `FundCard` sub-component
-- `Charts.jsx` — pure SVG chart primitives (`DonutChart`, `DiversificationGauge`, `RiskBar`, `GeoBar`, `ProjectedBar`) reused by `ResultsScreen`
+```bash
+OPENAI_API_KEY=sk-...
+PORT=3001
+```
 
-The OpenAI call is `fetchPortfolio()` in `Financial Planner.html`. It posts to `https://api.openai.com/v1/chat/completions` with `model: gpt-4o-mini` and `response_format: { type: 'json_object' }`. The prompt body is built by `buildPrompt(formData)` in `planner/constants.js` — that function is the contract for the JSON shape the rest of the app expects.
+Do not expose the OpenAI key to the browser, localStorage, client env vars, or Vite `VITE_*` variables.
 
-The API key is collected by an in-app modal and stored in `localStorage` under `fp_openai_key`. The repo's `.env` file is a placeholder and is **not read by the browser app**.
+## Common Commands
 
-## When recreating the design in a target codebase
+```bash
+npm install
+npm run dev
+npm run typecheck
+npm run build
+npm start
+```
 
-- `README.md` is the source of truth for design tokens (colors, typography, spacing) and per-screen layout/interaction specs. Read it before producing UI.
-- All design tokens are also available programmatically in `planner/constants.js` (`C`, `FONT`, `SLICE_COLORS`, `GEO_COLORS`) — copy values from there to avoid transcription errors.
-- The data shape returned from OpenAI is documented in `buildPrompt()` in `planner/constants.js` and in the "State Management" section of `README.md`. Match it exactly.
-- Behaviour quirks called out in the README that are easy to miss:
-  - "Global (All)" region and specific regions are mutually exclusive; deselecting all specific regions should re-select "Global"
-  - Allocations from the API may not sum to exactly 100 — normalise before rendering the donut
-  - First 3 fund cards default to expanded; rest collapsed
-  - In production, the OpenAI key must not live in the browser — route the call through a server-side function
+In development, Vite runs on `5173` and proxies `/api` to the backend on `3001`. In production, `npm start` serves `client/dist` from the Express server.
 
-## Code style
+## Engineering Notes
 
-- **Comments sparingly.** Only add a comment to explain a complex function or to record a non-obvious tradeoff. Do not narrate what the code does — well-named identifiers and types are enough. If a reader could infer the comment from the code, delete it.
-
-## Testing
-
-- When implementing a feature, add tests alongside it that cover the golden path and the edge cases the feature was written to handle.
-- After making code changes, run the relevant tests automatically to confirm the change works as intended before reporting the task complete. Do not rely on type-checking or visual inspection alone.
-- If a test runner does not yet exist in the target codebase you're working in, set one up as part of the first feature that needs tests, and mention it to the user.
-
-## Conventions specific to the prototype
-
-- Styling is **inline JS objects** referencing `C` and `FONT` from `constants.js`, plus a small block of global CSS in the `<style>` tag of `Financial Planner.html` (scrollbar, range slider thumb, keyframes `spin` / `fadeUp` / `fadeIn`). There is no Tailwind, no CSS modules, no styled-components.
-- Charts are hand-rolled SVG (no Recharts/D3). If touching `Charts.jsx`, keep the SVG-only approach unless the user asks to swap libraries.
-- Do not add a build step, package manager, or TypeScript to the prototype itself — its constraint is "open the HTML file and it works." If the user wants those things, they want a recreation in a target codebase, not a refactor of this one.
+- Keep the portfolio response contract aligned across `server/src/prompt.ts`, `client/src/types.ts`, and the result UI.
+- Keep request validation server-side in `server/src/index.ts`; client validation is for user experience only.
+- Prefer small, typed modules over duplicating data or response-shaping logic.
+- Preserve the dark/gold financial planner visual system unless the user asks for a redesign.
+- Run `npm run typecheck` and `npm run build` before reporting completion.
